@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+# Determine directory of script
+DIR=$( dirname "${BASH_SOURCE[0]}" )
+
+mkdir -p $HOME/bin &&
+cp -v $DIR/*/* $HOME/bin ||
+echo >&2 Unable to install
+
