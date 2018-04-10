@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+DIR=$( dirname "${BASH_SOURCE[0]}" )
+source "$DIR/split_object.sh"
+
 # map name [ key=value ]*
 #
 # Constructs a map object and populates with the specified key/value pairs.
@@ -26,11 +29,11 @@
 
 function map( ) {
 	local name=$1
+	object_create "$name" "map" || return
 	shift
-	unset __map_$name
 	declare -A -g __map_$name
-	object_create "$name" "map::"
 	$name.assign "$@"
+	return 0
 }
 
 # name.destroy
@@ -50,7 +53,7 @@ function map::destroy( ) {
 function map::copy( ) {
 	local name=$1
 	local other=$2
-	map "$other"
+	map "$other" || return
 	local -n old_map=__map_$name
 	local -n new_map=__map_$other
 	for key in "${!old_map[@]}"
@@ -64,6 +67,7 @@ function map::copy( ) {
 # Assign entries in the map
 
 function map::assign( ) {
+	local name=$1
 	local -n map=__map_$1
 	shift
 	while (( $# > 0 ))
@@ -79,6 +83,7 @@ function map::assign( ) {
 # Assign entries in the map - allows keys to hold = symbols if required
 
 function map::pair( ) {
+	local name=$1
 	local -n map=__map_$1
 	local key=$2
 	shift 2
@@ -90,6 +95,7 @@ function map::pair( ) {
 # Outputs the known keys
 
 function map::keys( ) {
+	local name=$1
 	local -n map=__map_$1
 	for key in "${!map[@]}"
 	do
@@ -102,6 +108,7 @@ function map::keys( ) {
 # Returns 0 if the key has been assigned
 
 function map::contains( ) {
+	local name=$1
 	local -n map=__map_$1
 	local key="$2"
 	test "${map[$key]+_}"
@@ -112,6 +119,7 @@ function map::contains( ) {
 # Outputs the current list of values
 
 function map::values( ) {
+	local name=$1
 	local -n map=__map_$1
 	for key in "${!map[@]}"
 	do
@@ -119,24 +127,36 @@ function map::values( ) {
 	done
 }
 
-# name.value key
+# name.value key ...
 #
-# Outputs the value of the requested key
+# Outputs the value of the requested keys
 
 function map::value( ) {
+	local name=$1
 	local -n map=__map_$1
-	local key="$2"
-	test "${map[$key]+isset}" && echo "${map[$key]}"
+	shift
+	local key
+	while (( $# > 0 ))
+	do
+		key=$1
+		test "${map[$key]+isset}" && echo "${map[$key]}"
+		shift
+	done
 }
 
-# name.remove key
+# name.remove key ...
 #
-# Removes the specified key
+# Removes the specified keys
 
 function map::remove( ) {
+	local name=$1
 	local -n map=__map_$1
-	local key="$2"
-	test "${map[$key]+isset}" && unset map["$key"]
+	shift
+	while (( $# > 0 ))
+	do
+		test "${map[$1]+isset}" && unset map["$1"]
+		shift
+	done
 }
 
 # name.size
@@ -144,6 +164,7 @@ function map::remove( ) {
 # Outputs the number of entries in the map
 
 function map::size( ) {
+	local name=$1
 	local -n map=__map_$1
 	echo "${#map[@]}"
 }
@@ -153,6 +174,7 @@ function map::size( ) {
 # Convenience method which lists the contents of the map
 
 function map::dump( ) {
+	local name=$1
 	local -n map=__map_$1
 	for key in "${!map[@]}"
 	do
@@ -176,7 +198,7 @@ function map::clear( ) {
 
 function map::read( ) {
 	local name=$1
-	while read
+	while read -r
 	do  
 		$name.assign "$REPLY"
 	done
@@ -187,9 +209,6 @@ function map::read( ) {
 # List the defined map objects
 
 function map.ls( ) {
-    declare -A | grep "^declare -A __map_" | sed -e 's/=.*$//' -e "s/^declare -A __map_//" | grep -v "^_"
+	object.ls map | grep -v "^_"
 }
 
-# Include the object definition stuff here
-INCLUDE_DIR=$( dirname "${BASH_SOURCE[0]}" )
-source "$INCLUDE_DIR/split_object.sh"

@@ -120,41 +120,18 @@ source "$DIR/split_utils.sh"
 
 # Return values:
 #
-# For imp:
-#
-# 0 if ok
-# 1 if not enough arguments received
-# 2 if imp with this name already exists
-# 3 if command cannot be found
-#
-# For others:
-#
-# 0 if ok
-# 1 if requested name doesn't exist
+# All functions/methods return 0 if successful.
 
 function imp( ) {
-	# Sanity check
-	if (( $# < 2 ))
-	then
-		echo "Usage: imp name command ..."
-		return 1
-	fi
-
-	# Everything should be fine now
+	# Ensure we can create an object of the named object
 	local name=$1
+	object.check_create "$name" || return
 	shift
-
-	# Ensure we don't overwrite
-	if function_exists "$name.evaluate" 
-	then
-		echo >&2 "imp called '$name' already exists"
-		return 2
-	fi
 
 	# Ensure specified command exists
 	if ! check_dependencies "$1" > /dev/null
 	then
-		echo >&2 "Cannot find the requested command '$1'"
+		echo >&2 "ERROR: Cannot find the requested command '$1'"
 		return 3
 	fi
 
@@ -163,7 +140,7 @@ function imp( ) {
 	map "$state"
 
 	# Create the object from the imp:: functions
-	object_create "$name" "imp::"
+	object_create "$name" "imp" || return
 
 	# Create a temporary dir to hold the fifos and lock
 	$state.pair temp "$( mktemp -d -t imp.XXXXXXXXXX )"
@@ -195,9 +172,13 @@ function imp( ) {
 	# Courtesy - set the echo command for known commands
 	case "$1" in
 		amlbatch | amltutor) $name.echo '$ "<key>" .' ;;
+		bash) $name.echo 'echo "<key>"' ;;
 		bc) $name.echo 'print "<key>\n"' ;;
 		dc) $name.echo '[<key>] p' ;;
-		bash) $name.echo 'echo "<key>"' ;;
+		python) 
+			$name.echo 'print "<key>"'
+			$name.evaluate 'import sys; sys.ps1=""' > /dev/null
+			;;
 	esac
 }
 
@@ -207,7 +188,6 @@ function imp( ) {
 
 function imp::destroy( ) {
 	local name=$1
-	function_exists "$name.evaluate" || return 0
 	local state=__imp_$name
 	rm -rf "$( $state.value temp )"
 	$state.destroy
@@ -232,7 +212,6 @@ function imp::destroy( ) {
 
 function imp::echo( ) {
 	local name=$1
-	function_exists "$name.evaluate" || return 1
 	local state=__imp_$name
 	shift
 	if (( $# > 0 ))
@@ -241,7 +220,7 @@ function imp::echo( ) {
 		then
 			$state.pair echo "$@"
 		else
-			echo >&2 "Invalid echo command - lacks <key>"
+			echo >&2 "ERROR: Invalid echo command - lacks <key>"
 			return 2
 		fi
 	else
@@ -278,18 +257,15 @@ function imp::echo( ) {
 
 function imp::evaluate( ) {
 	local name=$1
-	function_exists "$name.evaluate" || return 1
 	local state=__imp_$name
 	local echocmd lock input output timeout missing
 	shift
 
-	# Determine stuff needed from state
+	# The echo command can have spaces, so take that in isolation
 	echocmd="$( $state.value echo )"
-	lock="$( $state.value lock )"
-	input="$( $state.value input )"
-	output="$( $state.value output )"
-	timeout="$( $state.value timeout )"
-	missing="$( $state.value lock_missing )"
+
+	# Get the rest of the state
+	read lock input output timeout missing <<< $( $state.value lock input output timeout lock_missing )
 
 	# Acquire a lock if possible
 	[[ "$missing" == "0" ]] && lockfile "$lock"
@@ -316,10 +292,7 @@ function imp::evaluate( ) {
 		done
 	else
 		# Fallback, just attempt to pop until timeout occurs
-		while read -r -t "$timeout" < "$output" 
-		do
-			echo "$REPLY"
-		done
+		while read -r -t "$timeout" < "$output" ; do echo "$REPLY" ; done
 	fi
 
 	# Relinquish the lock
@@ -352,7 +325,6 @@ function imp::evaluate( ) {
 
 function imp::read( ) {
 	local name=$1
-	function_exists "$name.evaluate" || return 1
 	local input=()
 	while read -r ; do input+=("$REPLY") ; done
 	$name.evaluate "${input[@]}"
@@ -365,7 +337,6 @@ function imp::read( ) {
 
 function imp::shell( ) {
 	local name=$1
-	function_exists "$name.evaluate" || return 1
 	local oldhist=$HISTFILE
 	local restore
 	shift
@@ -414,7 +385,7 @@ function imp::shell( ) {
 
 function imp.dump( ) {
 	local name=$1
-	function_exists "$name.evaluate" || return 1
+	object.check_exists "$name" imp || return
 	local state=__imp_$name
 	$state.dump
 }
@@ -429,7 +400,7 @@ function imp.dump( ) {
 
 function imp.run( ) {
 	local name=$1
-	function_exists "$name.evaluate" || return 1
+	object.check_exists "$name" imp || return
 	local state=__imp_$name
 	local pid
 
@@ -439,13 +410,11 @@ function imp.run( ) {
 	# Only start if no pid exists
 	if [[ "$pid" == "" ]]
 	then
-		local temp execute input output
+		local execute temp input output
 
 		# Extract the relevant state here
-		temp=$( $state.value temp )
 		execute=$( $state.value execute )
-		input=$( $state.value input )
-		output=$( $state.value output )
+		read temp input output <<< $( $state.value temp input output )
 
 		# Handle cross platform startup stuff here
 		case "$( uname -s )" in
@@ -477,7 +446,7 @@ function imp.run( ) {
 				;;
 		esac
 	else
-		echo >&2 "imp $execute already running as $pid"
+		echo >&2 "ERROR: imp $name already running as $pid"
 		return 1
 	fi
 }
@@ -487,7 +456,6 @@ function imp.run( ) {
 # Not a class method - just lists existing imp instances
 
 function imp.ls( ) {
-	declare -A | grep "^declare -A __map___imp_" | sed -e 's/=.*$//' -e "s/^declare -A __map___imp_//" | grep -v "^_"
+	object.ls imp | grep -v "^_"
 }
-
 
