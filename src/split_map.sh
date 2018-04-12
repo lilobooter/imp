@@ -27,7 +27,7 @@ source "$DIR/split_object.sh"
 # The intent is to wrap the ugly (but powerful) bash associative array in a
 # prettier, more convenient manner.
 
-function map( ) {
+map( ) {
 	local name=$1
 	object_create "$name" "map" || return
 	shift
@@ -40,7 +40,7 @@ function map( ) {
 #
 # Destroys the map
 
-function map::destroy( ) {
+map::destroy( ) {
 	local name=$1
 	unset __map_$name
 	object_destroy "$name"
@@ -50,7 +50,7 @@ function map::destroy( ) {
 #
 # Creates a copy of the map as other
 
-function map::copy( ) {
+map::copy( ) {
 	local name=$1
 	local other=$2
 	map "$other" || return
@@ -66,7 +66,7 @@ function map::copy( ) {
 #
 # Assign entries in the map
 
-function map::assign( ) {
+map::assign( ) {
 	local name=$1
 	local -n map=__map_$1
 	shift
@@ -82,7 +82,7 @@ function map::assign( ) {
 #
 # Assign entries in the map - allows keys to hold = symbols if required
 
-function map::pair( ) {
+map::pair( ) {
 	local name=$1
 	local -n map=__map_$1
 	local key=$2
@@ -94,7 +94,7 @@ function map::pair( ) {
 #
 # Outputs the known keys
 
-function map::keys( ) {
+map::keys( ) {
 	local name=$1
 	local -n map=__map_$1
 	for key in "${!map[@]}"
@@ -107,7 +107,7 @@ function map::keys( ) {
 #
 # Returns 0 if the key has been assigned
 
-function map::contains( ) {
+map::contains( ) {
 	local name=$1
 	local -n map=__map_$1
 	local key="$2"
@@ -118,7 +118,7 @@ function map::contains( ) {
 #
 # Outputs the current list of values
 
-function map::values( ) {
+map::values( ) {
 	local name=$1
 	local -n map=__map_$1
 	for key in "${!map[@]}"
@@ -131,7 +131,7 @@ function map::values( ) {
 #
 # Outputs the value of the requested keys
 
-function map::value( ) {
+map::value( ) {
 	local name=$1
 	local -n map=__map_$1
 	shift
@@ -148,7 +148,7 @@ function map::value( ) {
 #
 # Removes the specified keys
 
-function map::remove( ) {
+map::remove( ) {
 	local name=$1
 	local -n map=__map_$1
 	shift
@@ -163,7 +163,7 @@ function map::remove( ) {
 #
 # Outputs the number of entries in the map
 
-function map::size( ) {
+map::size( ) {
 	local name=$1
 	local -n map=__map_$1
 	echo "${#map[@]}"
@@ -173,7 +173,7 @@ function map::size( ) {
 #
 # Convenience method which lists the contents of the map
 
-function map::dump( ) {
+map::dump( ) {
 	local name=$1
 	local -n map=__map_$1
 	for key in "${!map[@]}"
@@ -186,7 +186,7 @@ function map::dump( ) {
 #
 # Removes everything from the map
 
-function map::clear( ) {
+map::clear( ) {
 	local name=$1
 	unset __map_$name
 	declare -A -g __map_$name
@@ -196,7 +196,7 @@ function map::clear( ) {
 #
 # Read values from stdin and assign to the map
 
-function map::read( ) {
+map::read( ) {
 	local name=$1
 	while read -r
 	do  
@@ -208,7 +208,7 @@ function map::read( ) {
 #
 # List the defined map objects
 
-function map.ls( ) {
+map.ls( ) {
 	object.ls map | grep -v "^_"
 }
 

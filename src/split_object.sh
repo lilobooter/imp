@@ -11,18 +11,18 @@
 #
 # For example:
 #
-# function stack( ) {
+# stack( ) {
 #	local name=$1
 #	object_create "$name" stack || return
 #	...
 # }
 #
-# function stack::push( ) {
+# stack::push( ) {
 #	local name=$1
 #	...
 # }
 #
-# function stack::pop( ) {
+# stack::pop( ) {
 #	local name=$1
 #	...
 # }
@@ -31,11 +31,11 @@
 #
 # By default the functions take the form:
 #
-# function name.push( ) {
+# name.push( ) {
 # 	object.check_exists name stack && stack::push name "$@"
 # }
 #
-# function name.pop( ) {
+# name.pop( ) {
 # 	object.check_exists name stack && stack::pop name "$@"
 # }
 #
@@ -43,11 +43,11 @@
 # valid. In practice this is overkill, since we have already validated the
 # name prior to creating the method, hence:
 #
-# function name.push( ) {
+# name.push( ) {
 # 	stack::push name "$@"
 # }
 #
-# function name.pop( ) {
+# name.pop( ) {
 # 	stack::pop name "$@"
 # }
 #
@@ -68,7 +68,7 @@
 #
 # See notes above for usage.
 
-function object_create( ) {
+object_create( ) {
 	local name=$1
 	local class=$2
 	local methods
@@ -91,7 +91,7 @@ function object_create( ) {
 # Destroys all methods which start with $name. - as created by object_create
 # above.
 
-function object_destroy( ) {
+object_destroy( ) {
 	local name=$1
 	local methods
 	object.check_exists "$name" || return
@@ -116,7 +116,7 @@ function object_destroy( ) {
 #
 # name.push [ args ]*
 
-function method_create( ) {
+method_create( ) {
 	local name=$1
 	shift
 	eval "$name( ) { $* \"\$@\" ; }"
@@ -127,7 +127,7 @@ function method_create( ) {
 # Verifies that 'name' indicates an object which can be created. Reports on 
 # stderr and returns a non-zero value if fails.
 
-function object.check_create( ) {
+object.check_create( ) {
 	local name=$1
 	if [[ "$name" == "" ]] ; then
 		echo >&2 "ERROR: No name specified"
@@ -147,7 +147,7 @@ function object.check_create( ) {
 # Verifies that 'name' indicates an existing object of type class if specified. 
 # Reports on stderr and returns a non-zero value if fails.
 
-function object.check_exists( ) {
+object.check_exists( ) {
 	local name=$1
 	local class=$2
 	if [[ "$name" == "" ]] ; then
@@ -167,7 +167,7 @@ function object.check_exists( ) {
 #
 # Lists created objects
 
-function object.ls( ) {
+object.ls( ) {
 	local class=$1
 	local name
 	for key in "${!object_instances[@]}"
@@ -185,7 +185,7 @@ function object.ls( ) {
 #
 # Creates a function for each output of "piranha --encoders" of the form:
 #
-# function piranha.name( ) { 
+# piranha.name( ) { 
 #   piranha ENCODER=name "$@"
 # }
 #
@@ -197,7 +197,7 @@ function object.ls( ) {
 # run the tool_up function - once it's complete, any changes made in that 
 # subshell are lost.
 
-function tool_up( ) {
+tool_up( ) {
 	local command=$1
 	local var=$2
 	shift 2

@@ -4,7 +4,7 @@
 #
 # Close script with an error message
 
-function die( ) {
+die( ) {
 	echo >&2 "ERROR: $*" ; exit 1
 }
 
@@ -12,7 +12,7 @@ function die( ) {
 #
 # Log message with date/time stamp
 
-function log( ) {
+log( ) {
 	echo >&2 "$( date '+%Y:%m:%d %H:%M.%S' )" "$@"
 }
 
@@ -20,7 +20,7 @@ function log( ) {
 #
 # Log message with date/time stamp
 
-function info( ) {
+info( ) {
 	(( DEBUG > 0 )) && log "$@" || return 0
 }
 
@@ -28,7 +28,7 @@ function info( ) {
 #
 # Outputs the number of currently running jobs
 
-function running( ) {
+running( ) {
 	jobs -p | wc -w
 }
 
@@ -36,7 +36,7 @@ function running( ) {
 #
 # Block until at least one of the specified or current jobs has completed
 
-function block( ) {
+block( ) {
 	local -a pids
 	(( $# > 0 )) && pids=( "$@" ) || pids=( $( jobs -p ) )
 	wait -n "${pids[@]}"
@@ -47,7 +47,7 @@ function block( ) {
 # Checks if 'which' can find the commands requested and fails with an appropriate
 # error listing missing commands
 
-function check_dependencies( ) {
+check_dependencies( ) {
 	local fail
 	for command in "$@"
 	do
@@ -74,7 +74,7 @@ function check_dependencies( ) {
 #
 # The result will be that DEFERRED is now g=12 while NON_DEFERRED will still be g=16
 
-function evaluate( ) {
+evaluate( ) {
 	while (( $# > 0 ))
 	do
 		local name="$1"
@@ -89,7 +89,7 @@ function evaluate( ) {
 #
 # List functions which have a certain prefix
 
-function list_functions( ) {
+list_functions( ) {
 	declare -F | grep " $1" | sed "s/^declare -f //"
 }
 
@@ -97,7 +97,7 @@ function list_functions( ) {
 #
 # Get the exension of the file
 
-function get_extension( ) {
+get_extension( ) {
 	local filename
 	filename=$( basename "$1" )
 	echo "${filename##*.}"
@@ -107,7 +107,7 @@ function get_extension( ) {
 #
 # Determines if a variable with the name already exists or not
 
-function variable_exists( ) {
+variable_exists( ) {
 	local key=$1
 	eval "test -z \${$key+_}"
 	(( $? == 0 )) && return 1 || return 0
@@ -117,7 +117,7 @@ function variable_exists( ) {
 #
 # Determine if function exists.
 
-function function_exists( ) {
+function_exists( ) {
 	[[ $( type -t "$1" ) == "function" ]]
 }
 
@@ -125,7 +125,7 @@ function function_exists( ) {
 #
 # Converts relative paths to absolute (reimplementation for systems which lack readlink -f)
 
-function fullpath( ) {
+fullpath( ) {
 	local path=$1
 	local abs=$path
 
@@ -150,7 +150,7 @@ function fullpath( ) {
 #
 # Converts relative paths to absolute
 
-function fullpath( ) {
+fullpath( ) {
 	readlink -f "$1"
 }
 
@@ -158,7 +158,7 @@ function fullpath( ) {
 #
 # Outputs a url encoded form of the input url
 
-function urlencode( ) {
+urlencode( ) {
 	local string="$1"
 	local strlen=${#string}
 	local encoded=""
@@ -185,7 +185,7 @@ function urlencode( ) {
 # Output the value of the switch - ie: get_value --url-prefix=/pug would output
 # "/pug".
 
-function switch_value( ) {
+switch_value( ) {
 	local name value
 	IFS='=' read name value <<< "$1"
 	echo "$value"
@@ -195,7 +195,7 @@ function switch_value( ) {
 #
 # Converts stdin to 4 character spaces instead of tabs
 
-function tabs_to_spaces( ) {
+tabs_to_spaces( ) {
 	expand -t 4
 }
 

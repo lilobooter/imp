@@ -35,7 +35,7 @@ source "$DIR/split_utils.sh"
 #
 # The second issue is that we lose a lot of features of the tools themselves. It
 # would be nice to have it retain state between calls for example, or to use 
-# bc's extensive grammar to provide additional functionality beyond the basics.
+# the extensive, or even simplified, grammar these tools can provide
 #
 # A third issue is that if the command you want is actually on another machine,
 # this becomes even more expensive to kick it off each time via ssh or similar.
@@ -95,7 +95,12 @@ source "$DIR/split_utils.sh"
 #
 # which you can leave at any point using ctrl+d and return to later. 
 #
-# Note that name.shell does not currently have a meaningful or usable history.
+# Note that name.shell does have a history, but due to a bug in bash, the 
+# initial history is populated from the bash history at that point. Upon 
+# re-entry, the last command for the named imp is available though. Also due 
+# to a bash bug, the first attempt to record a command fails - hence a 
+# dummy/unsaved entry is introduced by way of a #'d comment. This is not
+# saved.
 #
 # You can inspect the methods available using a double tab:
 #
@@ -122,7 +127,7 @@ source "$DIR/split_utils.sh"
 #
 # All functions/methods return 0 if successful.
 
-function imp( ) {
+imp( ) {
 	# Ensure we can create an object of the named object
 	local name=$1
 	object.check_create "$name" || return
@@ -135,12 +140,12 @@ function imp( ) {
 		return 3
 	fi
 
-	# This object holds all state in this map
-	local state=__imp_$name
-	map "$state"
-
 	# Create the object from the imp:: functions
 	object_create "$name" "imp" || return
+
+	# This object holds all state in this map
+	local state=__imp_$name
+	map "$state" || return
 
 	# Create a temporary dir to hold the fifos and lock
 	$state.pair temp "$( mktemp -d -t imp.XXXXXXXXXX )"
@@ -186,7 +191,7 @@ function imp( ) {
 #
 # Destroys the named instance
 
-function imp::destroy( ) {
+imp::destroy( ) {
 	local name=$1
 	local state=__imp_$name
 	rm -rf "$( $state.value temp )"
@@ -210,7 +215,7 @@ function imp::destroy( ) {
 # constructor. Other tools will require manual specification where applicable.
 # See name.evaluate for additional information on how this is used.
 
-function imp::echo( ) {
+imp::echo( ) {
 	local name=$1
 	local state=__imp_$name
 	shift
@@ -255,7 +260,7 @@ function imp::echo( ) {
 # Care should also be taken to avoid deadlocks by having the evaluation of one
 # command relying on the evaluation of another.
 
-function imp::evaluate( ) {
+imp::evaluate( ) {
 	local name=$1
 	local state=__imp_$name
 	local echocmd lock input output timeout missing
@@ -323,7 +328,7 @@ function imp::evaluate( ) {
 # The intent with this method is to provide a more convenient approach for 
 # exchanging larger blocks of input to the imp.
 
-function imp::read( ) {
+imp::read( ) {
 	local name=$1
 	local input=()
 	while read -r ; do input+=("$REPLY") ; done
@@ -335,10 +340,9 @@ function imp::read( ) {
 # Starts an interactive shell for the named instance. The optional command
 # specified as arguments are ran before the interactive shell is started.
 
-function imp::shell( ) {
+imp::shell( ) {
 	local name=$1
 	local oldhist=$HISTFILE
-	local restore
 	shift
 
 	# Temporarily replace history file used with one for this command
@@ -350,7 +354,7 @@ function imp::shell( ) {
 	history -s "# Start of shell session for $name"
 
 	# Ensure we turn off globbing while preserving the original state
-	[[ $- = *f* ]] || restore='set +f'
+	[[ $- = *f* ]] || trap "set +f" RETURN
 	set -f
 
 	# Evalaute arguments as a command
@@ -370,9 +374,6 @@ function imp::shell( ) {
 	# Ensure the cursor is in the right place at exit (line below last prompt)
 	echo
 
-	# Restore globbing
-	eval "$restore"
-
 	# Save the history and ensure we return to the default history file
 	history -a
 	HISTFILE="$oldhist"
@@ -383,7 +384,7 @@ function imp::shell( ) {
 #
 # Reports internal state of named imp
 
-function imp.dump( ) {
+imp.dump( ) {
 	local name=$1
 	object.check_exists "$name" imp || return
 	local state=__imp_$name
@@ -398,7 +399,7 @@ function imp.dump( ) {
 # uses the input and output fifos constructed in the ctor. Note that the logic
 # is slightly different between linux and cygwin.
 
-function imp.run( ) {
+imp.run( ) {
 	local name=$1
 	object.check_exists "$name" imp || return
 	local state=__imp_$name
@@ -435,6 +436,7 @@ function imp.run( ) {
 				# Execute the keepalive process
 				imp.keepalive.unix &
 				$state.pair keepalive $!
+				disown $!
 
 				imp.execute.unix( ) {
 					$execute < "$input" > "$output" 2>&1
@@ -443,6 +445,7 @@ function imp.run( ) {
 				# Excute the main job
 				imp.execute.unix &
 				$state.pair process $!
+				disown $!
 				;;
 		esac
 	else
@@ -455,7 +458,7 @@ function imp.run( ) {
 #
 # Not a class method - just lists existing imp instances
 
-function imp.ls( ) {
+imp.ls( ) {
 	object.ls imp | grep -v "^_"
 }
 
