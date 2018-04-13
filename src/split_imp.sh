@@ -5,16 +5,30 @@ source "$DIR/split_object.sh"
 source "$DIR/split_map.sh"
 source "$DIR/split_utils.sh"
 
-# imp name command ...
+# imp [ name ] command ...
 #
-# Creates a backgrounded process of 'command ...' and a pair of fifos to interact 
-# with it.
+# Turns any 'command ...' which accepts input on stdin and produces output on 
+# stdout into a stateful server.
 #
+# Example of use from a bash command line:
+#
+# $ source split_imp.sh
+# $ imp calculator bc -l
+# $ calculator.evaluate "10 + 20"
+# 30
+# $ calculator.evaluate "20 + 30" "40 + 50"
+# 50
+# 90
+# $ result=$( calculator.evaluate ". * 4" )
+# $ echo $result
+# 360
+# $ calculator.destroy
+
 # PLEASE NOTE:
 #
-# The documentation is very much focussed on using imp interactively, but imp's 
-# primary purpose is to be used inside other scripts. The purpose of the interactive 
-# commands is to introduce a debugging tool for script development.
+# This documentation is very much focussed on using imp interactively, but imp's 
+# primary purpose is to be used inside other scripts. The purpose of the 
+# interactive commands is to introduce a debugging tool for script development.
 
 # Rationale:
 #
@@ -131,7 +145,10 @@ imp( ) {
 	# Ensure we can create an object of the named object
 	local name=$1
 	object.check_create "$name" || return
-	shift
+
+	# Shift the arguments if we have another one and it doesn't start with
+	# a switch - thus supporting imp bc -l etc.
+	[[ "$2" != "" && "$2" != -* ]] && shift
 
 	# Ensure specified command exists
 	if ! check_dependencies "$1" > /dev/null
@@ -168,10 +185,7 @@ imp( ) {
 	$state.pair execute "$@"
 	imp.run "$name" || return 1
 
-	# Ensure we cleanup on exit
-	trap "$name.destroy" EXIT
-
-	# We need a place to store shell history
+	# We need a place to store shell history - may as well create it now
 	mkdir -p ~/.imp/history
 
 	# Courtesy - set the echo command for known commands
@@ -343,6 +357,7 @@ imp::read( ) {
 imp::shell( ) {
 	local name=$1
 	local oldhist=$HISTFILE
+	local glob=-f
 	shift
 
 	# Temporarily replace history file used with one for this command
@@ -354,7 +369,7 @@ imp::shell( ) {
 	history -s "# Start of shell session for $name"
 
 	# Ensure we turn off globbing while preserving the original state
-	[[ $- = *f* ]] || trap "set +f" RETURN
+	[[ "$-" == *f* ]] || glob=+f
 	set -f
 
 	# Evalaute arguments as a command
@@ -373,6 +388,9 @@ imp::shell( ) {
 
 	# Ensure the cursor is in the right place at exit (line below last prompt)
 	echo
+
+	# Restore globbing
+	set "$glob"
 
 	# Save the history and ensure we return to the default history file
 	history -a
