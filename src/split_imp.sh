@@ -282,9 +282,11 @@ imp::evaluate( ) {
 
 	# The echo command can have spaces, so take that in isolation
 	echocmd="$( $state.value echo )"
-
-	# Get the rest of the state
-	read lock input output timeout missing <<< $( $state.value lock input output timeout lock_missing )
+	lock="$( $state.value lock )"
+	input="$( $state.value input )"
+	output="$( $state.value output )"
+	timeout="$( $state.value timeout )"
+	missing="$( $state.value lock_missing )"
 
 	# Acquire a lock if possible
 	[[ "$missing" == "0" ]] && lockfile "$lock"
@@ -433,7 +435,9 @@ imp.run( ) {
 
 		# Extract the relevant state here
 		execute=$( $state.value execute )
-		read temp input output <<< $( $state.value temp input output )
+		temp=$( $state.value temp )
+		input=$( $state.value input )
+		output=$( $state.value output )
 
 		# Handle cross platform startup stuff here
 		case "$( uname -s )" in
