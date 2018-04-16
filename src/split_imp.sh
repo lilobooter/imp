@@ -119,7 +119,7 @@ source "$DIR/split_utils.sh"
 # You can inspect the methods available using a double tab:
 #
 # $ calculator.[tab][tab]
-# calculator.destroy   calculator.echo      calculator.evaluate  
+# calculator.destroy   calculator.config    calculator.evaluate  
 # calculator.read      calculator.shell
 # $ calculator.
 #
@@ -188,16 +188,33 @@ imp( ) {
 	# We need a place to store shell history - may as well create it now
 	mkdir -p ~/.imp/history
 
+	# Find the command we're running
+	local command=$1
+
+	if [[ "$command" == "ssh" ]] ; then
+		local arg
+		for arg in "$@" ; do
+			[[ "$arg" == "ssh" || "$arg" == -* || "$arg" == *@* ]] && continue
+			command=$arg
+			break
+		done
+	fi
+
 	# Courtesy - set the echo command for known commands
-	case "$1" in
-		amlbatch | amltutor) $name.echo '$ "<key>" .' ;;
-		bash) $name.echo 'echo "<key>"' ;;
-		bc) $name.echo 'print "<key>\n"' ;;
-		dc) $name.echo '[<key>] p' ;;
+	case "$command" in
+		amlbatch | amltutor) 
+			$name.config echo '$ "<key>" .' ;;
+		ssh | bash | sh | ksh) 
+			$name.config echo 'echo "<key>"' ;;
+		bc) 
+			$name.config echo 'print "<key>\n"' ;;
+		dc) 
+			$name.config echo '[<key>] p' ;;
 		python) 
-			$name.echo 'print "<key>"'
-			$name.evaluate 'import sys; sys.ps1=""' > /dev/null
-			;;
+			$name.config echo 'print "<key>"'
+			$name.evaluate 'import sys; sys.ps1=""' > /dev/null ;;
+		*) 
+			echo >&2 "Unrecognised command '$command' - using a timeout" ;;
 	esac
 }
 
@@ -213,37 +230,59 @@ imp::destroy( ) {
 	object_destroy "$name"
 }
 
-# name.echo [ command ... ]
+# name.config [ options ... ]
 #
-# This method allows you to specify a tool specific manner to echo a string. The
-# command should contain <key> as this will get replaced by a random string on 
-# each use.
+# Provides access to the internal options. 
+#
+# By default (without options), it reports all state.
+#
+# You can also query an individual setting using (for example):
+#
+# name.config timeout
+#
+# And you can set modifiable settings using:
+#
+# name.config timeout 0.5
+#
+# This method also allows you to specify a tool specific manner to echo a 
+# string. The command should contain <key> as this will get replaced by a 
+# random string on each use.
 #
 # For example:
 #
-# $ amlbatch.echo '$ "<key>" .'
-# $ bc.echo 'print "<key>\n"'
+# $ amlbatch.config echo '$ "<key>" .'
+# $ bc.config echo print "<key>\n"
 # etc
 #
-# Common cases for local instances are automatically handled in the imp 
+# Common cases for local or ssh instances are automatically handled in the imp 
 # constructor. Other tools will require manual specification where applicable.
 # See name.evaluate for additional information on how this is used.
 
-imp::echo( ) {
+imp::config( ) {
 	local name=$1
 	local state=__imp_$name
 	shift
-	if (( $# > 0 ))
-	then
-		if [[ "$@" == *\<key\>* ]]
-		then
-			$state.pair echo "$@"
-		else
-			echo >&2 "ERROR: Invalid echo command - lacks <key>"
-			return 2
-		fi
+	if (( $# == 0 )) ; then
+		$state.dump
+	elif (( $# == 1 )) ; then
+		$state.value "$1"
 	else
-		$state.value "echo"
+		local setting=$1
+		shift
+		case "$setting" in
+		timeout | lock_missing )
+			$state.pair "$setting" "$@" ;;
+		echo )
+			if [[ "$@" == *\<key\>* ]]
+			then
+				$state.pair echo "$@"
+			else
+				echo >&2 "ERROR: Invalid echo command - lacks <key>"
+				return 2
+			fi ;;
+		* )
+			echo >&2 "Invalid config option '$setting'" ;;
+		esac
 	fi
 }
 
@@ -253,10 +292,10 @@ imp::echo( ) {
 #
 # There are two conditions to the read back of the result:
 #
-# * if name.echo has been specified or derived on startup, then the provided 
-#   args are pushed first, followed by the echo (after replacing <key> with 
-#   a random string). We then do a blocking read until the random string is 
-#   returned.
+# * if name.config echo has been specified or derived on startup, then the 
+#   provided args are pushed first, followed by the echo (after replacing 
+#   <key> with a random string). We then do a blocking read until the random 
+#   string is returned.
 #
 # * otherwise, we read the output with a timeout value until no more output is 
 #   returned. This is of course, rather problematic if the processing takes 
@@ -282,6 +321,12 @@ imp::evaluate( ) {
 
 	# The echo command can have spaces, so take that in isolation
 	echocmd="$( $state.value echo )"
+
+	# TODO: Find out how to re-instate this properly
+	#read lock input output timeout missing <<< $( $state.value lock input output timeout lock_missing )
+
+	# Since the read logic is failing on a later version of bash, I'm doing it
+	# this way for now (very inefficiently)
 	lock="$( $state.value lock )"
 	input="$( $state.value input )"
 	output="$( $state.value output )"
