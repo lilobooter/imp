@@ -270,9 +270,21 @@ imp::config( ) {
 		local setting=$1
 		shift
 		case "$setting" in
-		timeout | lock_missing )
+		timeout)
 			$state.pair "$setting" "$@" ;;
-		echo )
+		lock_missing)
+			if [[ "$1" == "0" ]] ; then
+				if check_dependencies lockfile > /dev/null
+				then
+					$state.pair "$setting" 0
+				else
+					echo >&2 "ERROR: Cannot turn locking on without lockfile installed"
+					return 3
+				fi
+			else
+				$state.pair "$setting" 1
+			fi ;;
+		echo)
 			if [[ "$@" == *\<key\>* ]]
 			then
 				$state.pair echo "$@"
@@ -280,8 +292,8 @@ imp::config( ) {
 				echo >&2 "ERROR: Invalid echo command - lacks <key>"
 				return 2
 			fi ;;
-		* )
-			echo >&2 "Invalid config option '$setting'" ;;
+		*)
+			echo >&2 "ERROR: Invalid config option '$setting'" ;;
 		esac
 	fi
 }
@@ -322,16 +334,8 @@ imp::evaluate( ) {
 	# The echo command can have spaces, so take that in isolation
 	echocmd="$( $state.value echo )"
 
-	# TODO: Find out how to re-instate this properly
-	#read lock input output timeout missing <<< $( $state.value lock input output timeout lock_missing )
-
-	# Since the read logic is failing on a later version of bash, I'm doing it
-	# this way for now (very inefficiently)
-	lock="$( $state.value lock )"
-	input="$( $state.value input )"
-	output="$( $state.value output )"
-	timeout="$( $state.value timeout )"
-	missing="$( $state.value lock_missing )"
+	# Extract multiple values
+	IFS=' ' read lock input output timeout missing <<< $( $state.value lock input output timeout lock_missing )
 
 	# Acquire a lock if possible
 	[[ "$missing" == "0" ]] && lockfile "$lock"
