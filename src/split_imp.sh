@@ -5,24 +5,129 @@ source "$DIR/split_object.sh"
 source "$DIR/split_map.sh"
 source "$DIR/split_utils.sh"
 
-# imp [ name ] command ...
+# USAGE:
+#
+# imp [ config ]* command ...
+#
+# where config is nothing or any of the following:
+#
+# --name=title		: Gives the imp a name
+# --echo=command	: Handhshaking command (see evaluate for more information)
+# --pager=command	: For use in the interactive shell
+# --timeout=value	: Fallback - when handshaking isn't an option
+# --wait=value		: Fallback - specify number of lines to wait for
+#
+# EXECUTIVE SUMMARY:
 #
 # Turns any 'command ...' which accepts input on stdin and produces output on 
 # stdout into a stateful server.
 #
-# Example of use from a bash command line:
+# EXAMPLE OF USE:
 #
-# $ source split_imp.sh
-# $ imp calculator bc -l
-# $ calculator.evaluate "10 + 20"
+# The following is an example of use from a bash command line using the GNU bc 
+# calculator. 
+#
+# This is perhaps not the most exciting command to use, but it's safe, fairly 
+# forgiving and it has features which are quite interesting in itself :).
+#
+# If bc does not excite you, consider playing with python -i or even bash itself.
+#
+# To instantiate an imp, simply source the split_imp.sh changing the path 
+# specified as appropriate:
+#
+# $ source src/split_imp.sh
+#
+# Then create your imp:
+#
+# $ imp bc -l
+#
+# If you use tab completion on bc. you will see all the methods with which you
+# can interact with your imp:
+#
+# bc.config    bc.destroy   bc.evaluate  bc.read      bc.shell
+#
+# We shall start by introducing the evaluate command:
+#
+# $ bc.evaluate "10 + 20"
 # 30
-# $ calculator.evaluate "20 + 30" "40 + 50"
+#
+# We can also request multiple calculations:
+#
+# $ bc.evaluate "20 + 30" "40 + 50"
 # 50
 # 90
-# $ result=$( calculator.evaluate ". * 4" )
-# $ echo $result
-# 360
-# $ calculator.destroy
+#
+# Note that imps hold state between uses. To do demonstrate this, I will use bc's
+# '.' functionality - this simply means 'the result of the last calculation:
+#
+# $ bc.evaluate "10 + 20"
+# 30
+# $ bc.evaluate ". * 4"
+# 120
+#
+# Environment variables can also be used in the command executed:
+#
+# $ value=10
+# $ bc.evaluate "$value * 4"
+# 40
+#
+# When multiple arguments are provided to evaluate, each is pushed to the instance
+# as a discrete line of text, hence:
+#
+# $ echo $( bc.evaluate "10 + 20" "30 + 40" )
+# 30 70
+# echo $( bc.evaluate 'for ( i = 0; i < 10; i ++ )' 'print i, "\n"' )
+# 0 1 2 3 4 5 6 7 8 9
+#
+# Additionally, assuming that a ssh-copy-id or similar has been executed, you can 
+# run an instance from a remote machine like:
+#
+# $ imp ssh user@server bc -l
+# $ ssh.evaluate "6 * 7"
+# 42
+#
+# Obviously, if you want to use ssh multiple times, it would be better to name 
+# each instance like:
+#
+# $ imp --name=server_bc ssh user@server bc -l
+#
+# You can also specify config options when constructing the imp:
+#
+# $ imp --name=amlclient --echo='aml.echo-<key>' nc localhost 55378
+#
+# which would create an imp called amlclient which connects with amldaemon at 
+# port 55378 on localhost.
+#
+# Additional Features:
+#
+# It also provides a basic interactive shell:
+#
+# $ bc.shell
+# bc> 6 * 7
+# 42
+# bc>
+#
+# which you can leave at any point using ctrl+d and return to later. 
+#
+# Note that name.shell does have a history, but due to a bug in bash, the 
+# initial history is populated from the bash history at that point. Upon 
+# re-entry, the last command for the named imp is available though. Also due 
+# to a bash bug, the first attempt to record a command fails - hence a 
+# dummy/unsaved entry is introduced by way of a #'d comment. This is not
+# saved.
+#
+# An alternative to evaluate and shell is read. This uses stdin to receive its 
+# input rather than command line arguments.
+#
+# To remove everything related to bc, you can run:
+#
+# $ bc.destroy
+#
+# The processes related to the object are now removed.
+#
+# To see what you currently have running, you can run the command:
+#
+# $ imp.ls
 
 # PLEASE NOTE:
 #
@@ -60,108 +165,44 @@ source "$DIR/split_utils.sh"
 # This class attempts to provide a mechanism which converts any executable which
 # executes commands received on stdin and produces output on stdout into a 
 # stateful server.
-#
-# Using the bc example, we can construct an imp object called calculator as 
-# follows:
-#
-# $ source split_imp.sh
-# $ imp calculator bc -l
-# $ calculator.evaluate "10 + 20"
-# 30
-# $ result=$( calculator.evaluate ". * 4" )
-# $ echo $result
-# 120
-#
-# In bc, . means 'the previous result' - this evaluation of result demonstrates 
-# that state is retained between uses.
-#
-# Environment variables can also be used in the command executed:
-#
-# $ echo $( calculator.evaluate "$result * 4" )
-# 480
-#
-# When multiple arguments are provided to evaluate, each is pushed to the instance
-# as a discrete line of text, hence:
-#
-# $ echo $( calculator.evaluate "10 + 20" "30 + 40" )
-# 30 70
-# echo $( calculator.evaluate 'for ( i = 0; i < 10; i ++ )' 'print i, "\n"' )
-# 0 1 2 3 4 5 6 7 8 9
-#
-# Additionally, assuming that a ssh-copy-id or similar has been executed, you can 
-# run an instance from a remote machine like:
-#
-# $ imp remote ssh user@server bc -l
-# $ remote.evaluate "6 * 7"
-# 42
-#
-# An alternative to evaluate and shell is read. This uses stdin to receive its 
-# input rather than command line arguments.
-
-# Additional Features:
-#
-# It also provides a basic interactive shell:
-#
-# $ calculator.shell
-# calculator> 6 * 7
-# 42
-# calculator>
-#
-# which you can leave at any point using ctrl+d and return to later. 
-#
-# Note that name.shell does have a history, but due to a bug in bash, the 
-# initial history is populated from the bash history at that point. Upon 
-# re-entry, the last command for the named imp is available though. Also due 
-# to a bash bug, the first attempt to record a command fails - hence a 
-# dummy/unsaved entry is introduced by way of a #'d comment. This is not
-# saved.
-#
-# You can inspect the methods available using a double tab:
-#
-# $ calculator.[tab][tab]
-# calculator.destroy   calculator.config    calculator.evaluate  
-# calculator.read      calculator.shell
-# $ calculator.
-#
-# The echo method provides a means for you to train imp regarding how you
-# interact with your object. See details below on what this provides and how
-# it's used.
-#
-# To remove everything related to the calculator, you can run:
-#
-# $ calculator.destroy
-#
-# The processes related to the object are now removed.
-#
-# To see what you currently have running, you can run the command:
-#
-# $ imp.ls
 
 # Return values:
 #
 # All functions/methods return 0 if successful.
 
 imp( ) {
+	# Pick up config switches - applied below
+	local name=
+	local -a switches
+
+	while [[ "$1" == --* ]] ; do
+		if [[ "$1" == --name=* ]] ; then
+			name=$( switch_value "$1" )
+		else
+			switches+=( "$1" )
+		fi
+		shift
+	done
+
+	# If name is not obtained by now, use the first argument
+	[[ "$name" == "" ]] && name=$1
+
 	# Ensure we can create an object of the named object
-	local name=$1
 	object.check_create "$name" || return
 
-	# Shift the arguments if we have another one and it doesn't start with
-	# a switch - thus supporting imp bc -l etc.
-	[[ "$2" != "" && "$2" != -* ]] && shift
-
 	# Ensure specified command exists
-	if ! check_dependencies "$1" > /dev/null
-	then
-		echo >&2 "ERROR: Cannot find the requested command '$1'"
-		return 3
+	if ! check_dependencies "$1" > /dev/null ; then
+		if ! function_exists "$1" ; then 
+			echo >&2 "ERROR: Cannot find the requested command '$1'"
+			return 3
+		fi
 	fi
 
 	# Create the object from the imp:: functions
-	object_create "$name" "imp" || return
+	object.create "$name" "imp" || return
 
 	# This object holds all state in this map
-	local state=__imp_$name
+	local state=_$name
 	map "$state" || return
 
 	# Create a temporary dir to hold the fifos and lock
@@ -181,6 +222,9 @@ imp( ) {
 	# Set the timeout for the fallback read
 	$state.pair timeout 0.2
 
+	# Another alternative - set wait for the number of lines expected
+	$state.pair wait -1
+
 	# Start the execution
 	$state.pair execute "$@"
 	imp.run "$name" || return 1
@@ -188,9 +232,15 @@ imp( ) {
 	# We need a place to store shell history - may as well create it now
 	mkdir -p ~/.imp/history
 
+	# Handle the switches we collected at the start
+	local key value
+	for switch in "${switches[@]}" ; do
+		IFS='=' read -r key value <<< "${switch/--/}"
+		$name.config "$key" "$value"
+	done
+
 	# Find the command we're running
 	local command=$1
-
 	if [[ "$command" == "ssh" ]] ; then
 		local arg
 		for arg in "$@" ; do
@@ -200,10 +250,11 @@ imp( ) {
 		done
 	fi
 
-	# Courtesy - set the echo command for known commands
+	# Courtesy - set the echo command for known commands if necessary
+	[[ "$( $state.value echo )" == "" && "$( $state.value wait )" == "-1" ]] &&
 	case "$command" in
-		amlbatch | amltutor) 
-			$name.config echo '$ "<key>" .' ;;
+		amlbatch | amltutor | aml*) 
+			$name.config echo 'aml.echo-<key>' ;;
 		ssh | bash | sh | ksh) 
 			$name.config echo 'echo "<key>"' ;;
 		bc) 
@@ -224,10 +275,10 @@ imp( ) {
 
 imp::destroy( ) {
 	local name=$1
-	local state=__imp_$name
+	local state=_$name
 	rm -rf "$( $state.value temp )"
 	$state.destroy
-	object_destroy "$name"
+	object.destroy "$name"
 }
 
 # name.config [ options ... ]
@@ -250,7 +301,7 @@ imp::destroy( ) {
 #
 # For example:
 #
-# $ amlbatch.config echo '$ "<key>" .'
+# $ amlbatch.config echo 'aml.echo-<key>'
 # $ bc.config echo print "<key>\n"
 # etc
 #
@@ -260,7 +311,7 @@ imp::destroy( ) {
 
 imp::config( ) {
 	local name=$1
-	local state=__imp_$name
+	local state=_$name
 	shift
 	if (( $# == 0 )) ; then
 		$state.dump
@@ -270,7 +321,7 @@ imp::config( ) {
 		local setting=$1
 		shift
 		case "$setting" in
-		timeout)
+		timeout | pager | wait)
 			$state.pair "$setting" "$@" ;;
 		lock_missing)
 			if [[ "$1" == "0" ]] ; then
@@ -327,15 +378,15 @@ imp::config( ) {
 
 imp::evaluate( ) {
 	local name=$1
-	local state=__imp_$name
-	local echocmd lock input output timeout missing
+	local state=_$name
+	local echocmd lock input output timeout missing wait
 	shift
 
 	# The echo command can have spaces, so take that in isolation
 	echocmd="$( $state.value echo )"
 
 	# Extract multiple values
-	IFS=' ' read lock input output timeout missing <<< $( $state.value lock input output timeout lock_missing )
+	IFS=' ' read lock input output timeout missing wait <<< $( $state.value lock input output timeout lock_missing wait )
 
 	# Acquire a lock if possible
 	[[ "$missing" == "0" ]] && lockfile "$lock"
@@ -357,8 +408,13 @@ imp::evaluate( ) {
 		while read -r < "$output"
 		do
 			[[ "$REPLY" == "$key" ]] && break
-			echo "${REPLY/$key/}"
-			[[ "$REPLY" == *$key ]] && break
+			echo "${REPLY/${key}*/}"
+			[[ "$REPLY" == *$key* ]] && break
+		done
+	elif (( wait >= 0 )) ; then
+		# Fallback, attempt to read wait lines
+		for (( i=0; i < wait; i ++ )) ; do
+			while read -r -t "$timeout" < "$output" ; do echo "$REPLY" ; done
 		done
 	else
 		# Fallback, just attempt to pop until timeout occurs
@@ -409,6 +465,7 @@ imp::shell( ) {
 	local name=$1
 	local oldhist=$HISTFILE
 	local glob=-f
+	local pager=$( $name.config pager )
 	shift
 
 	# Temporarily replace history file used with one for this command
@@ -427,14 +484,14 @@ imp::shell( ) {
 	if (( $# > 0 ))
 	then 
 		history -s "$@"
-		$name.evaluate "$@" | less -e -F
+		paginate $name.evaluate "$@"
 	fi
 
 	# Read input one line at a time and evaluate each
 	while read -r -e -p "$name> " 
 	do
 		[[ "$REPLY" != "" && "$REPLY" != -* ]] && history -s "$REPLY"
-		$name.evaluate "$REPLY" | less -e -F
+		paginate $name.evaluate "$REPLY"
 	done
 
 	# Ensure the cursor is in the right place at exit (line below last prompt)
@@ -449,17 +506,6 @@ imp::shell( ) {
 	history -r
 }
 
-# imp.dump name
-#
-# Reports internal state of named imp
-
-imp.dump( ) {
-	local name=$1
-	object.check_exists "$name" imp || return
-	local state=__imp_$name
-	$state.dump
-}
-
 # imp.run name
 #
 # Starts the imp as a background process.
@@ -471,7 +517,7 @@ imp.dump( ) {
 imp.run( ) {
 	local name=$1
 	object.check_exists "$name" imp || return
-	local state=__imp_$name
+	local state=_$name
 	local pid
 
 	# Obtain pid of existing process if running
@@ -505,7 +551,7 @@ imp.run( ) {
 				}
 
 				# Execute the keepalive process
-				imp.keepalive.unix &
+				{ imp.keepalive.unix & } 2> /dev/null
 				$state.pair keepalive $!
 				disown $!
 
@@ -514,7 +560,7 @@ imp.run( ) {
 				}
 
 				# Excute the main job
-				imp.execute.unix &
+				{ imp.execute.unix & } 2> /dev/null
 				$state.pair process $!
 				disown $!
 				;;

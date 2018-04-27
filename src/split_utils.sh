@@ -199,3 +199,15 @@ tabs_to_spaces( ) {
 	expand -t 4
 }
 
+# paginate command ...
+#
+# If "paginator" is defined, then pipe the output of command through the 
+# command specified
+
+paginate( ) {
+	if [[ $pager ]] ; then
+		"$@" | $pager
+	else
+		"$@"
+	fi
+}

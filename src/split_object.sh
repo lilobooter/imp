@@ -13,7 +13,7 @@
 #
 # stack( ) {
 #	local name=$1
-#	object_create "$name" stack || return
+#	object.create "$name" stack || return
 #	...
 # }
 #
@@ -60,7 +60,7 @@
 # Constructors can create global variables or other state (such as files)
 # incorporating the given name and the methods can access them.
 
-# object_create name class
+# object.create name class
 #
 # Creates methods of the form name.method for all functions that match start
 # with $class:: - the class is removed, and the remainder becomes the method
@@ -68,7 +68,7 @@
 #
 # See notes above for usage.
 
-object_create( ) {
+object.create( ) {
 	local name=$1
 	local class=$2
 	local methods
@@ -79,19 +79,19 @@ object_create( ) {
 	do
 		if [[ "$OBJECT_TRUSTED" == "1" ]]
 		then
-			method_create "$name.$method" "$class::$method $name"
+			method.create "$name.$method" "$class::$method $name"
 		else
-			method_create "$name.$method" "object.check_exists $name $class && $class::$method $name"
+			method.create "$name.$method" "object.check_exists $name $class && $class::$method $name"
 		fi
 	done
 }
 
-# object_destroy name
+# object.destroy name
 #
-# Destroys all methods which start with $name. - as created by object_create
+# Destroys all methods which start with $name. - as created by object.create
 # above.
 
-object_destroy( ) {
+object.destroy( ) {
 	local name=$1
 	local methods
 	object.check_exists "$name" || return
@@ -103,20 +103,20 @@ object_destroy( ) {
 	done
 }
 
-# method_create name function args ...
+# method.create name function args ...
 #
 # Creats a function of name which calls function (or script or execuable) with
 # the remainder of the args and appending args provided at runtime.
 #
 # For example:
 #
-# method_create name.push stack::push name
+# method.create name.push stack::push name
 #
 # Would make a function called name.push with a usage of:
 #
 # name.push [ args ]*
 
-method_create( ) {
+method.create( ) {
 	local name=$1
 	shift
 	eval "$name( ) { $* \"\$@\" ; }"
@@ -206,7 +206,7 @@ tool_up( ) {
 	while read name
 	do
 		echo "$command.$name -> $command $var$name" "$@"
-		method_create "$command.$name" "$command" "$var$name" "$@"
+		method.create "$command.$name" "$command" "$var$name" "$@"
 	done
 }
 

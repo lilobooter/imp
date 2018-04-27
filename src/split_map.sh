@@ -29,7 +29,7 @@ source "$DIR/split_object.sh"
 
 map( ) {
 	local name=$1
-	object_create "$name" "map" || return
+	object.create "$name" "map" || return
 	shift
 	declare -A -g __map_$name
 	$name.assign "$@"
@@ -43,7 +43,7 @@ map( ) {
 map::destroy( ) {
 	local name=$1
 	unset __map_$name
-	object_destroy "$name"
+	object.destroy "$name"
 }
 
 # name.copy other
@@ -123,7 +123,7 @@ map::values( ) {
 	local -n map=__map_$1
 	for key in "${!map[@]}"
 	do
-		echo "${map[$key]}"
+		test "${map[$key]+_}" && echo "${map[$key]}"
 	done
 }
 
