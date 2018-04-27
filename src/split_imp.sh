@@ -468,6 +468,12 @@ imp::shell( ) {
 	local pager=$( $name.config pager )
 	shift
 
+	# Sanity check for shell usage
+	if [[ $- != *i* ]] ; then
+		echo >&2 "ERROR: Can only run in an interactive shell"
+		return 1
+	fi
+
 	# Temporarily replace history file used with one for this command
 	history -a
 	HISTFILE="$HOME/.imp/history/$name"
