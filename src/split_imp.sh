@@ -274,6 +274,8 @@ imp( ) {
 	esac
 }
 
+# METHODS:
+
 # name.destroy
 #
 # Destroys the named instance
@@ -517,6 +519,8 @@ imp::shell( ) {
 	history -r
 }
 
+# INTERNALS:
+
 # imp.run name
 #
 # Starts the imp as a background process.
@@ -582,12 +586,12 @@ imp.run( ) {
 	fi
 }
 
+# PUBLIC:
+
 # imp.ls
 #
-# Not a class method - just lists existing imp instances
+# Lists existing imp instances
 
 imp.ls( ) {
 	object.ls imp | grep -v "^_"
 }
-
-

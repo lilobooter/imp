@@ -1,28 +1,58 @@
 #!/usr/bin/env bash
 
+# Copyright (C) 2018 Charles Yates
+# Released under the LGPL
+
 DIR=$( dirname "${BASH_SOURCE[0]}" )
 source "$DIR/split_object.sh"
 
-# map name [ key=value ]*
+# USAGE:
 #
-# Constructs a map object and populates with the specified key/value pairs.
+# map name [ key=value ]
 #
-# Example usage:
+# EXECUTIVE SUMMARY:
 #
-# $ source split_map.sh
+# Constructs an associative array object and populates with the specified 
+# key/value pairs. Provides additional high level access to the array.
+#
+# EXAMPLE OF USE:
+#
+# To instantiate an imp, simply source the split_map.sh changing the path 
+# specified as appropriate:
+#
+# $ source src/split_map.sh
+#
+# Then create your map:
+#
 # $ map name
+#
+# Assign some values:
+#
 # $ name.assign key=value foo=bar fufu=snusnu
+#
+# Obtain the list of keys:
+#
 # $ echo $( name.keys )
 # key foo fufu
+#
+# Obtain a value from the map by its key:
+#
 # $ echo $( name.value key )
 # value
+#
+# Remove a key:
+#
 # $ name.remove key
 # $ echo $( name.keys )
 # foo fufu
-# $ name.[tab][tab]
+#
+# Use tab completion to see all available methods:
+#
 # name.assign    name.clear     name.contains  name.copy      name.destroy   
 # name.dump      name.keys      name.read      name.remove    name.size      
 # name.value     name.values
+#
+# RATIONALE:
 #
 # The intent is to wrap the ugly (but powerful) bash associative array in a
 # prettier, more convenient manner.
@@ -35,6 +65,8 @@ map( ) {
 	$name.assign "$@"
 	return 0
 }
+
+# METHODS:
 
 # name.destroy
 #
@@ -203,6 +235,8 @@ map::read( ) {
 		$name.assign "$REPLY"
 	done
 }
+
+# PUBLIC:
 
 # map.ls
 #

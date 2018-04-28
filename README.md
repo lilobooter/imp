@@ -170,6 +170,8 @@
 
   All functions/methods return 0 if successful.
  
+  METHODS:
+ 
   name.destroy
 
   Destroys the named instance
@@ -258,6 +260,8 @@
   Starts an interactive shell for the named instance. The optional command
   specified as arguments are ran before the interactive shell is started.
  
+  INTERNALS:
+ 
   imp.run name
 
   Starts the imp as a background process.
@@ -266,7 +270,9 @@
   uses the input and output fifos constructed in the ctor. Note that the logic
   is slightly different between linux and cygwin.
  
+  PUBLIC:
+ 
   imp.ls
 
-  Not a class method - just lists existing imp instances
+  Lists existing imp instances
 ```

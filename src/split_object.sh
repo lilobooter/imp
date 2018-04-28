@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 
-# Object functions
+# Copyright (C) 2018 Charles Yates
+# Released under the LGPL
+
+# OBJECT FUNCTIONS
 #
 # These functions help automate object construction. The basic concept is that
 # a class consists of a constructor and a collection of functions which all take
@@ -9,7 +12,7 @@
 # creates usable functions of the form '$name.$method' and when executed they
 # call the real function as 'class:method name ...'.
 #
-# For example:
+# EXAMPLE:
 #
 # stack( ) {
 #	local name=$1
@@ -59,6 +62,8 @@
 #
 # Constructors can create global variables or other state (such as files)
 # incorporating the given name and the methods can access them.
+
+# PUBLIC FUNCTIONS:
 
 # object.create name class
 #
@@ -177,6 +182,8 @@ object.ls( ) {
 	done
 }
 
+# MISCELLANY:
+
 # tool_up command env-var
 #
 # Example:
@@ -209,6 +216,8 @@ tool_up( ) {
 		method.create "$command.$name" "$command" "$var$name" "$@"
 	done
 }
+
+# GLOBAL STATE:
 
 # object_instances global array created here if necessary
 
