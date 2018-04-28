@@ -4,20 +4,20 @@
   Released under the LGPL
  
 ```
-#  USAGE:
+###  USAGE:
 ```
 
   map name [ key=value ]
 
 ```
-#  EXECUTIVE SUMMARY:
+###  EXECUTIVE SUMMARY:
 ```
 
   Constructs an associative array object and populates with the specified 
   key/value pairs. Provides additional high level access to the array.
 
 ```
-#  EXAMPLE OF USE:
+###  EXAMPLE OF USE:
 ```
 
   To instantiate an imp, simply source the split_map.sh changing the path 
@@ -56,14 +56,14 @@
   name.value     name.values
 
 ```
-#  RATIONALE:
+###  RATIONALE:
 ```
 
   The intent is to wrap the ugly (but powerful) bash associative array in a
   prettier, more convenient manner.
  
 ```
-#  METHODS:
+###  METHODS:
 ```
  
   name.destroy
@@ -119,7 +119,7 @@
   Read values from stdin and assign to the map
  
 ```
-#  PUBLIC:
+###  PUBLIC:
 ```
  
   map.ls

@@ -13,7 +13,7 @@
   call the real function as 'class:method name ...'.
 
 ```
-#  EXAMPLE:
+###  EXAMPLE:
 ```
 
   stack( ) {
@@ -66,7 +66,7 @@
   incorporating the given name and the methods can access them.
  
 ```
-#  PUBLIC FUNCTIONS:
+###  PUBLIC FUNCTIONS:
 ```
  
   object.create name class
@@ -110,7 +110,7 @@
   Lists created objects
  
 ```
-#  MISCELLANY:
+###  MISCELLANY:
 ```
  
   tool_up command env-var
@@ -134,7 +134,7 @@
   subshell are lost.
  
 ```
-#  GLOBAL STATE:
+###  GLOBAL STATE:
 ```
  
   object_instances global array created here if necessary

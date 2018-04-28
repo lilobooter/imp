@@ -4,7 +4,7 @@
   Released under the LGPL
  
 ```
-#  USAGE:
+###  USAGE:
 ```
 
   imp [ config ] command ...
@@ -18,14 +18,14 @@
   --wait=value      : Fallback - specify number of lines to wait for
 
 ```
-#  EXECUTIVE SUMMARY:
+###  EXECUTIVE SUMMARY:
 ```
 
   Turns any 'command ...' which accepts input on stdin and produces output on 
   stdout into a stateful server.
 
 ```
-#  EXAMPLE OF USE:
+###  EXAMPLE OF USE:
 ```
 
   The following is an example of use from a bash command line using the GNU bc 
@@ -136,7 +136,7 @@
   $ imp.ls
  
 ```
-#  PLEASE NOTE:
+###  PLEASE NOTE:
 ```
 
   This documentation is very much focussed on using imp interactively, but imp's 
@@ -144,7 +144,7 @@
   interactive commands is to introduce a debugging tool for script development.
  
 ```
-#  RATIONALE:
+###  RATIONALE:
 ```
 
   A very common requirement in scripting is to carry out operations using small 
@@ -177,13 +177,13 @@
   stateful server.
  
 ```
-#  RETURN VALUES:
+###  RETURN VALUES:
 ```
 
   All functions/methods return 0 if successful.
  
 ```
-#  METHODS:
+###  METHODS:
 ```
  
   name.destroy
@@ -275,7 +275,7 @@
   specified as arguments are ran before the interactive shell is started.
  
 ```
-#  INTERNALS:
+###  INTERNALS:
 ```
  
   imp.run name
@@ -287,7 +287,7 @@
   is slightly different between linux and cygwin.
  
 ```
-#  PUBLIC:
+###  PUBLIC:
 ```
  
   imp.ls
