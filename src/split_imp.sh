@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Copyright (C) 2018 Charles Yates
+# Released under the LGPL
+
 DIR=$( dirname "${BASH_SOURCE[0]}" )
 source "$DIR/split_object.sh"
 source "$DIR/split_map.sh"
@@ -7,7 +10,7 @@ source "$DIR/split_utils.sh"
 
 # USAGE:
 #
-# imp [ config ]* command ...
+# imp [ config ] command ...
 #
 # where config is nothing or any of the following:
 #
@@ -57,8 +60,8 @@ source "$DIR/split_utils.sh"
 # 50
 # 90
 #
-# Note that imps hold state between uses. To do demonstrate this, I will use bc's
-# '.' functionality - this simply means 'the result of the last calculation:
+# Note that imps hold state between uses. To demonstrate this, I will use bc's
+# '.' functionality - this simply means 'the result of the last calculation':
 #
 # $ bc.evaluate "10 + 20"
 # 30
@@ -90,6 +93,8 @@ source "$DIR/split_utils.sh"
 # each instance like:
 #
 # $ imp --name=server_bc ssh user@server bc -l
+# $ server_bc.evaluate "2 * 3 * 7"
+# 42
 #
 # You can also specify config options when constructing the imp:
 #
@@ -135,7 +140,7 @@ source "$DIR/split_utils.sh"
 # primary purpose is to be used inside other scripts. The purpose of the 
 # interactive commands is to introduce a debugging tool for script development.
 
-# Rationale:
+# RATIONALE:
 #
 # A very common requirement in scripting is to carry out operations using small 
 # tools. For example, we can use the GNU bc command to carry out floating point
@@ -166,7 +171,7 @@ source "$DIR/split_utils.sh"
 # executes commands received on stdin and produces output on stdout into a 
 # stateful server.
 
-# Return values:
+# RETURN VALUES:
 #
 # All functions/methods return 0 if successful.
 
@@ -584,4 +589,5 @@ imp.run( ) {
 imp.ls( ) {
 	object.ls imp | grep -v "^_"
 }
+
 
