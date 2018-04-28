@@ -12,7 +12,9 @@
   creates usable functions of the form '$name.$method' and when executed they
   call the real function as 'class:method name ...'.
 
-  EXAMPLE:
+```
+#  EXAMPLE:
+```
 
   stack( ) {
     local name=$1
@@ -63,7 +65,9 @@
   Constructors can create global variables or other state (such as files)
   incorporating the given name and the methods can access them.
  
-  PUBLIC FUNCTIONS:
+```
+#  PUBLIC FUNCTIONS:
+```
  
   object.create name class
 
@@ -105,7 +109,9 @@
 
   Lists created objects
  
-  MISCELLANY:
+```
+#  MISCELLANY:
+```
  
   tool_up command env-var
 
@@ -127,7 +133,9 @@
   run the tool_up function - once it's complete, any changes made in that 
   subshell are lost.
  
-  GLOBAL STATE:
+```
+#  GLOBAL STATE:
+```
  
   object_instances global array created here if necessary
 ```

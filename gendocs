@@ -7,7 +7,8 @@ create() {
 	grep -P '^#[ \t]*' -A 0 | 
 	sed 's/^--$/ /' | 
 	expand -t 4 | 
-	sed -e 's/# /  /' -e 's/^#//' 
+	sed -e 's/# /  /' -e 's/^#//' |
+	sed -s 's/^[A-Z ]*:[ ]*$/```\n#&\n```/'
 	echo '```'
 }
 

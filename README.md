@@ -3,7 +3,9 @@
   Copyright (C) 2018 Charles Yates
   Released under the LGPL
  
-  USAGE:
+```
+#  USAGE:
+```
 
   imp [ config ] command ...
 
@@ -15,12 +17,16 @@
   --timeout=value   : Fallback - when handshaking isn't an option
   --wait=value      : Fallback - specify number of lines to wait for
 
-  EXECUTIVE SUMMARY:
+```
+#  EXECUTIVE SUMMARY:
+```
 
   Turns any 'command ...' which accepts input on stdin and produces output on 
   stdout into a stateful server.
 
-  EXAMPLE OF USE:
+```
+#  EXAMPLE OF USE:
+```
 
   The following is an example of use from a bash command line using the GNU bc 
   calculator. 
@@ -129,13 +135,17 @@
 
   $ imp.ls
  
-  PLEASE NOTE:
+```
+#  PLEASE NOTE:
+```
 
   This documentation is very much focussed on using imp interactively, but imp's 
   primary purpose is to be used inside other scripts. The purpose of the 
   interactive commands is to introduce a debugging tool for script development.
  
-  RATIONALE:
+```
+#  RATIONALE:
+```
 
   A very common requirement in scripting is to carry out operations using small 
   tools. For example, we can use the GNU bc command to carry out floating point
@@ -166,11 +176,15 @@
   executes commands received on stdin and produces output on stdout into a 
   stateful server.
  
-  RETURN VALUES:
+```
+#  RETURN VALUES:
+```
 
   All functions/methods return 0 if successful.
  
-  METHODS:
+```
+#  METHODS:
+```
  
   name.destroy
 
@@ -260,7 +274,9 @@
   Starts an interactive shell for the named instance. The optional command
   specified as arguments are ran before the interactive shell is started.
  
-  INTERNALS:
+```
+#  INTERNALS:
+```
  
   imp.run name
 
@@ -270,7 +286,9 @@
   uses the input and output fifos constructed in the ctor. Note that the logic
   is slightly different between linux and cygwin.
  
-  PUBLIC:
+```
+#  PUBLIC:
+```
  
   imp.ls
 
