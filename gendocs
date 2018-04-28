@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+create() {
+	echo "# $1"
+	echo '```'
+	grep -v '^#!/usr' "$2" | 
+	grep -P '^#[ \t]*' -A 0 | 
+	sed 's/^--$/ /' | 
+	expand -t 4 | 
+	sed -e 's/# /  /' -e 's/^#//' 
+	echo '```'
+}
+
+create imp src/split_imp.sh > README.md
+create map src/split_map.sh > README_map.md
+create object src/split_object.sh > README_object.md
+
