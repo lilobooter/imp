@@ -91,6 +91,30 @@ object.create( ) {
 	done
 }
 
+# object.extend name class
+#
+# Adds methods of the form name.method for all functions that match start
+# with $class:: - the class is removed, and the remainder becomes the method
+# ie: stack::push with a class of stack would create a method of $name.push.
+
+object.extend( ) {
+	local name=$1
+	local class=$2
+	local methods
+	object.check_exists "$name" || return
+	object_instances[$name]="$class ${object_instances[$name]}"
+	methods=$( declare -F | grep " $class::" | sed "s/^declare -f $class:://" )
+	for method in $methods
+	do
+		if [[ "$OBJECT_TRUSTED" == "1" ]]
+		then
+			method.create "$name.$method" "$class::$method $name"
+		else
+			method.create "$name.$method" "object.check_exists $name $class && $class::$method $name"
+		fi
+	done
+}
+
 # object.destroy name
 #
 # Destroys all methods which start with $name. - as created by object.create
@@ -161,7 +185,7 @@ object.check_exists( ) {
 	elif [[ ! "${object_instances[$name]+_}" ]] ; then
 		echo >&2 "ERROR: Unable to locate an object called '$name'"
 		return 2
-	elif [[ "$class" != "" && "${object_instances[$name]}" != "$class" ]] ; then
+	elif [[ "$class" != "" && ! " ${object_instances[$name]} " =~ " $class " ]] ; then
 		echo >&2 "ERROR: Object '$name' is a '${object_instances[$name]}' not a '$class'"
 		return 2
 	fi
@@ -178,7 +202,7 @@ object.ls( ) {
 	for key in "${!object_instances[@]}"
 	do
 		[[ "$class" == "" ]] && echo "$key -> ${object_instances[$key]}"
-		[[ "$class" != "" && "$class" == "${object_instances[$key]}" ]] && echo "$key"
+		[[ "$class" != "" && " ${object_instances[$key]} " =~ " $class " ]] && echo "$key"
 	done
 }
 

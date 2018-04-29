@@ -77,6 +77,12 @@
 
   See notes above for usage.
  
+  object.extend name class
+
+  Adds methods of the form name.method for all functions that match start
+  with $class:: - the class is removed, and the remainder becomes the method
+  ie: stack::push with a class of stack would create a method of $name.push.
+ 
   object.destroy name
 
   Destroys all methods which start with $name. - as created by object.create

@@ -174,14 +174,20 @@ source "$DIR/split_utils.sh"
 # RETURN VALUES:
 #
 # All functions/methods return 0 if successful.
+#
+# On exit of the constructor, the IMP_LAST_CREATED environment variable will be
+# assigned the chosen name of the imp.
 
 imp( ) {
 	# Pick up config switches - applied below
 	local name=
+	local ssh=
 	local -a switches
 
 	while [[ "$1" == --* ]] ; do
-		if [[ "$1" == --name=* ]] ; then
+		if [[ "$1" == --ssh=* ]] ; then
+			ssh=$( switch_value "$1" )
+		elif [[ "$1" == --name=* ]] ; then
 			name=$( switch_value "$1" )
 		else
 			switches+=( "$1" )
@@ -231,7 +237,11 @@ imp( ) {
 	$state.pair wait -1
 
 	# Start the execution
-	$state.pair execute "$@"
+	if [[ "$ssh" == "" ]] ; then
+		$state.pair execute "$@"
+	else
+		$state.pair execute ssh "$ssh" "$@"
+	fi
 	imp.run "$name" || return 1
 
 	# We need a place to store shell history - may as well create it now
@@ -272,6 +282,9 @@ imp( ) {
 		*) 
 			echo >&2 "Unrecognised command '$command' - using a timeout" ;;
 	esac
+
+	# Allow scripts the ability to pick up the name of the last imp created
+	IMP_LAST_CREATED=$name
 }
 
 # METHODS:

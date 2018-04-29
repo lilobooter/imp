@@ -181,6 +181,9 @@
 ```
 
   All functions/methods return 0 if successful.
+
+  On exit of the constructor, the IMP_LAST_CREATED environment variable will be
+  assigned the chosen name of the imp.
  
 ```
 ###  METHODS:
