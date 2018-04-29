@@ -3,7 +3,9 @@
   Copyright (C) 2018 Charles Yates
   Released under the LGPL
  
-  OBJECT FUNCTIONS
+```
+###  OBJECT FUNCTIONS:
+```
 
   These functions help automate object construction. The basic concept is that
   a class consists of a constructor and a collection of functions which all take
