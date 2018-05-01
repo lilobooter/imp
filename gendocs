@@ -15,4 +15,5 @@ create() {
 create imp src/split_imp.sh > README.md
 create map src/split_map.sh > README_map.md
 create object src/split_object.sh > README_object.md
+create imp_utils src/split_imp_utils.sh > README_imp_utils.md
 
