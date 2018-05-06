@@ -4,7 +4,17 @@
 # Released under the LGPL
 
 DIR=$( dirname "${BASH_SOURCE[0]}" )
-source "$dirname/bin/split_imp.sh"
+source "$dirname/split_imp.sh"
+
+# USAGE:
+#
+# source split_imp_utils.sh
+#
+# This script provides a collection of functions which provide preconfigured 
+# imps.
+#
+# It also introduces the concept of object.extends where new methods can be 
+# added to an existing object.
 
 # BC:
 
@@ -61,6 +71,16 @@ imp.festival() {
 	# Extend the imp with the festival methods
 	object.extend "$IMP_LAST_CREATED" festival
 }
+
+# CONFIGURATION:
+#
+# The imps above can be controlled via the following env var:
+#
+# imp_pager
+#
+# Typically, you can leave this as default.
+
+imp_pager=--pager="less -FeX"
 
 # TERMBIN:
 

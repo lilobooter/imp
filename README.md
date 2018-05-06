@@ -48,7 +48,7 @@
   If you use tab completion on bc. you will see all the methods with which you
   can interact with your imp:
 
-  bc.config    bc.destroy   bc.evaluate  bc.read      bc.shell
+  bc.cat    bc.config    bc.destroy   bc.evaluate  bc.shell
 
   We shall start by introducing the evaluate command:
 
@@ -122,8 +122,8 @@
   dummy/unsaved entry is introduced by way of a #'d comment. This is not
   saved.
 
-  An alternative to evaluate and shell is read. This uses stdin to receive its 
-  input rather than command line arguments.
+  An alternative to evaluate and shell is cat. This uses stdin or file arguments
+  to receive its input rather than command line arguments.
 
   To remove everything related to bc, you can run:
 
@@ -248,7 +248,7 @@
   Care should also be taken to avoid deadlocks by having the evaluation of one
   command relying on the evaluation of another.
  
-  name.read
+  name.cat
 
   Reads stdin until eof and runs contents via name.evaluate
 
@@ -257,16 +257,16 @@
 
   Examples of use:
 
-  $ echo "10 + 20" | calculator.read
+  $ echo "10 + 20" | calculator.cat
   30
-  $ calculator.read <<< "10 + 20"
+  $ calculator.cat <<< "10 + 20"
   30
-  $ calculator.read << EOF
-  10 + 20
-  EOF
+  $ calculator.cat << EOF
+  > 10 + 20
+  > EOF
   30
   $ echo "10 + 20" > file
-  $ calculator.read < file
+  $ calculator.cat file
   30
 
   The intent with this method is to provide a more convenient approach for 

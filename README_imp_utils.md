@@ -4,6 +4,18 @@
   Released under the LGPL
  
 ```
+###  USAGE:
+```
+
+  source split_imp_utils.sh
+
+  This script provides a collection of functions which provide preconfigured 
+  imps.
+
+  It also introduces the concept of object.extends where new methods can be 
+  added to an existing object.
+ 
+```
 ###  BC:
 ```
  
@@ -34,6 +46,16 @@
   imp.festival [ imp-config ]
 
   Silly - text to speech thing
+ 
+```
+###  CONFIGURATION:
+```
+
+  The imps above can be controlled via the following env var:
+
+  imp_pager
+
+  Typically, you can leave this as default.
  
 ```
 ###  TERMBIN:

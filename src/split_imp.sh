@@ -47,7 +47,7 @@ source "$DIR/split_utils.sh"
 # If you use tab completion on bc. you will see all the methods with which you
 # can interact with your imp:
 #
-# bc.config    bc.destroy   bc.evaluate  bc.read      bc.shell
+# bc.cat    bc.config    bc.destroy   bc.evaluate  bc.shell
 #
 # We shall start by introducing the evaluate command:
 #
@@ -121,8 +121,8 @@ source "$DIR/split_utils.sh"
 # dummy/unsaved entry is introduced by way of a #'d comment. This is not
 # saved.
 #
-# An alternative to evaluate and shell is read. This uses stdin to receive its 
-# input rather than command line arguments.
+# An alternative to evaluate and shell is cat. This uses stdin or file arguments
+# to receive its input rather than command line arguments.
 #
 # To remove everything related to bc, you can run:
 #
@@ -182,11 +182,15 @@ imp( ) {
 	# Pick up config switches - applied below
 	local name=
 	local ssh=
+	local ssh_opts=
+	local exec=
 	local -a switches
 
 	while [[ "$1" == --* ]] ; do
 		if [[ "$1" == --ssh=* ]] ; then
 			ssh=$( switch_value "$1" )
+		elif [[ "$1" == --ssh-opts=* ]] ; then
+			ssh_opts=$( switch_value "$1" )
 		elif [[ "$1" == --name=* ]] ; then
 			name=$( switch_value "$1" )
 		else
@@ -207,6 +211,8 @@ imp( ) {
 			echo >&2 "ERROR: Cannot find the requested command '$1'"
 			return 3
 		fi
+	else
+		exec=exec
 	fi
 
 	# Create the object from the imp:: functions
@@ -238,9 +244,9 @@ imp( ) {
 
 	# Start the execution
 	if [[ "$ssh" == "" ]] ; then
-		$state.pair execute "$@"
+		$state.pair execute "$exec" "$@"
 	else
-		$state.pair execute ssh "$ssh" "$@"
+		$state.pair execute "$exec" ssh "$ssh" $ssh_opts "$@"
 	fi
 	imp.run "$name" || return 1
 
@@ -297,6 +303,7 @@ imp::destroy( ) {
 	local name=$1
 	local state=_$name
 	rm -rf "$( $state.value temp )"
+	kill "$( $state.value process )" 2>/dev/null
 	$state.destroy
 	object.destroy "$name"
 }
@@ -445,7 +452,7 @@ imp::evaluate( ) {
 	[[ "$missing" == "0" ]] && rm -f "$lock"
 }
 
-# name.read
+# name.cat
 #
 # Reads stdin until eof and runs contents via name.evaluate
 #
@@ -454,25 +461,27 @@ imp::evaluate( ) {
 #
 # Examples of use:
 #
-# $ echo "10 + 20" | calculator.read
+# $ echo "10 + 20" | calculator.cat
 # 30
-# $ calculator.read <<< "10 + 20"
+# $ calculator.cat <<< "10 + 20"
 # 30
-# $ calculator.read << EOF
-# 10 + 20
-# EOF
+# $ calculator.cat << EOF
+# > 10 + 20
+# > EOF
 # 30
 # $ echo "10 + 20" > file
-# $ calculator.read < file
+# $ calculator.cat file
 # 30
 #
 # The intent with this method is to provide a more convenient approach for 
 # exchanging larger blocks of input to the imp.
 
-imp::read( ) {
-	local name=$1
+imp::cat( ) {
+	local name=$1 ; shift
 	local input=()
-	while read -r ; do input+=("$REPLY") ; done
+	for arg in "${@:-/dev/stdin}" ; do
+		while IFS='' read -r || [[ -n "$REPLY" ]] ; do input+=("$REPLY") ; done < "$arg"
+	done
 	$name.evaluate "${input[@]}"
 }
 
@@ -563,6 +572,11 @@ imp.run( ) {
 		output=$( $state.value output )
 
 		# Handle cross platform startup stuff here
+		#
+		# Since a fifo typically has one use, we need to do trick them into thinking
+		# that they're still in use. For linux, I found it was enough to start a long
+		# running process which is just opening both fd's but beyond that doing 
+		# nothing with them. This failed on cygwin, hence the alternative approach.
 		case "$( uname -s )" in
 			CYGWIN*)
 				imp.execute.cygwin( ) {
