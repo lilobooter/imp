@@ -4,7 +4,7 @@
 # Released under the LGPL
 
 DIR=$( dirname "${BASH_SOURCE[0]}" )
-source "$dirname/split_imp.sh"
+source "$DIR/split_imp.sh"
 
 # USAGE:
 #
