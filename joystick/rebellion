@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+
+# Copyright (C) 2018 Charles Yates
+# Released under the LGPL
+
+# USAGE:
+#
+# rebellion [ device ]
+#
+# Simulates a mouse by way of a joystick.
+#
+# It seemed like a funny thing to do.
+
+DIR=$( dirname "${BASH_SOURCE[0]}" )
+source "$DIR/cocky.sh"
+
+# GLOBAL STATE:
+#
+# speed_x and speed_y hold the current speed of the pointer.
+
+speed_x=0
+speed_y=0
+
+# METHODS:
+
+# cocky_button <number> <value> <time>
+#
+# Simulate the joystick to mouse button transalation
+
+cocky_button() {
+	local mouse key method
+
+	case "$1" in
+	0) mouse=1 ;; # Left
+	1) mouse=3 ;; # Middle
+	2) mouse=1 ;; # Left
+	3) mouse=2 ;; # Right
+	4) key=Page_Up ;;
+	5) key=Page_Down ;;
+	*) return ;;
+	esac
+
+	if [[ "$mouse" != "" ]] ; then
+		case "$2" in
+		0) method=mouseup ;;
+		1) method=mousedown ;;
+		*) return ;;
+		esac
+		xte "$method $mouse"
+	elif [[ "$key" != "" ]] ; then
+		case "$2" in
+		0) method=keyup ;;
+		1) method=keydown ;;
+		*) return ;;
+		esac
+		xte "$method $key"
+	fi
+}
+
+# cocky_axis <number> <value> <time>
+#
+# Various axis are used to move the pointer at different rates
+
+cocky_axis() {
+	case "$1" in
+	0) let "speed_x=$2/2048" ;;
+	1) let "speed_y=$2/2048" ;;
+	3) let "speed_x=$2/8192" ;;
+	4) let "speed_y=$2/8192" ;;
+	6) let "speed_x=2*$2/32767" ;;
+	7) let "speed_y=2*$2/32767" ;;
+	esac
+	(( speed_x > -2 && speed_x < 2 )) && speed_x=0
+	(( speed_y > -2 && speed_y < 2 )) && speed_y=0
+	xte "mousermove $speed_x $speed_y"
+}
+
+# cocky_event
+#
+# Handle the pointer movements of the current speed
+
+cocky_event() {
+	if (( "$speed_x" != 0 || "$speed_y" != 0 )) ; then
+		xte "mousermove $speed_x $speed_y"
+	fi
+}
+
+# Execute cocky if this is script is not sourced
+
+if [[ "$_" != "$0" ]] ; then 
+	which xte > /dev/null 2>&1 || { echo >&2 "ERROR: xte is not available - install the xautomation package" ; return 1 ; }
+	cocky "$@"
+fi
