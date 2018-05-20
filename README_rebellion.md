@@ -35,5 +35,5 @@
 
   Handle the pointer movements of the current speed
  
-  Execute cocky if this is script is not sourced
+  Execute rebellion if this script has not been sourced
 ```

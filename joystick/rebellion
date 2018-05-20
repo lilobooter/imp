@@ -3,6 +3,9 @@
 # Copyright (C) 2018 Charles Yates
 # Released under the LGPL
 
+DIR=$( dirname "${BASH_SOURCE[0]}" )
+source "$DIR/cocky.sh"
+
 # USAGE:
 #
 # rebellion [ device ]
@@ -11,8 +14,10 @@
 #
 # It seemed like a funny thing to do.
 
-DIR=$( dirname "${BASH_SOURCE[0]}" )
-source "$DIR/cocky.sh"
+rebellion() {
+	which xte > /dev/null 2>&1 || { echo >&2 "ERROR: xte is not available - install the xautomation package" ; return 1 ; }
+	cocky "$@"
+}
 
 # GLOBAL STATE:
 #
@@ -32,9 +37,9 @@ cocky_button() {
 
 	case "$1" in
 	0) mouse=1 ;; # Left
-	1) mouse=3 ;; # Middle
+	1) mouse=3 ;; # Right
 	2) mouse=1 ;; # Left
-	3) mouse=2 ;; # Right
+	3) mouse=2 ;; # Middle
 	4) key=Page_Up ;;
 	5) key=Page_Down ;;
 	*) return ;;
@@ -62,16 +67,16 @@ cocky_button() {
 # Various axis are used to move the pointer at different rates
 
 cocky_axis() {
+	local value
+	let value="$2 ^ 1023" 
 	case "$1" in
-	0) let "speed_x=$2/2048" ;;
-	1) let "speed_y=$2/2048" ;;
-	3) let "speed_x=$2/8192" ;;
-	4) let "speed_y=$2/8192" ;;
-	6) let "speed_x=2*$2/32767" ;;
-	7) let "speed_y=2*$2/32767" ;;
+	0) let "speed_x=$value/2048" ;;
+	1) let "speed_y=$value/2048" ;;
+	3) let "speed_x=$value/8192" ;;
+	4) let "speed_y=$value/8192" ;;
+	6) let "speed_x=2*$value/32767" ;;
+	7) let "speed_y=2*$value/32767" ;;
 	esac
-	(( speed_x > -2 && speed_x < 2 )) && speed_x=0
-	(( speed_y > -2 && speed_y < 2 )) && speed_y=0
 	xte "mousermove $speed_x $speed_y"
 }
 
@@ -85,9 +90,6 @@ cocky_event() {
 	fi
 }
 
-# Execute cocky if this is script is not sourced
+# Execute rebellion if this script has not been sourced
 
-if [[ "$_" != "$0" ]] ; then 
-	which xte > /dev/null 2>&1 || { echo >&2 "ERROR: xte is not available - install the xautomation package" ; return 1 ; }
-	cocky "$@"
-fi
+[[ "$_" != "$0" ]] && rebellion "$@"
